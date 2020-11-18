@@ -3,61 +3,61 @@ package net.donotturnoff.fexp;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.io.*;
-import javax.swing.BorderFactory; 
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import java.lang.Runtime;
 import java.lang.Process;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import java.awt.Image;
-import javax.imageio.*;
-import java.awt.image.*;
-import javax.imageio.stream.ImageOutputStream;
-
-import java.awt.geom.AffineTransform;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FileExplorer extends JFrame implements ActionListener, ItemListener, KeyListener, ComponentListener, MouseListener {
-	ClassLoader ldr = this.getClass().getClassLoader();
-	ImageIcon dirIcon = new ImageIcon(ldr.getResource("icons/dir.png"));
-	ImageIcon fileIcon = new ImageIcon(ldr.getResource("icons/file.png"));
+	private final ClassLoader ldr = this.getClass().getClassLoader();
+	public final ImageIcon DIR_ICON = new ImageIcon(ldr.getResource("icons/dir.png"));
+	public final ImageIcon FILE_ICON = new ImageIcon(ldr.getResource("icons/file.png"));
 
-	JPanel menuPnl = new JPanel();
-	JPanel treePnl = new JPanel();
-	JPanel filesPnl = new JPanel();
-	JScrollPane filesPane = new JScrollPane(filesPnl);
-	JPanel statusPnl = new JPanel();
-	
-	ArrayList<JPanel> paddingPnls = new ArrayList<JPanel>();
-	ArrayList<Icon> icons = new ArrayList<Icon>();
-	ArrayList<Icon> selectedIcons = new ArrayList<Icon>();
-	
-	boolean ctrlPressed = false;
-	
+	private final JPanel menuPnl = new JPanel();
+	private final JPanel filesPnl = new JPanel();
+
+	private final Set<JPanel> paddingPnls = new HashSet<>();
+	private final Set<Icon> icons = new HashSet<>();
+	private final Set<Icon> selectedIcons = new HashSet<>();
+
 	ThumbnailLoader thumbnailLoader = new ThumbnailLoader(icons);
 	
-	JButton backBtn = new JButton("<");
-	JButton upBtn = new JButton("^");
-	JButton forwardsBtn = new JButton(">");
-	JButton homeBtn = new JButton("Home");
-	JButton refreshBtn = new JButton("@");
-	JTextField pathEntry = new JTextField(72);
-	JButton navigateBtn = new JButton("=>");
-	JCheckBox showHiddenChk = new JCheckBox("Show hidden files");
+	final JButton backBtn = new JButton("<");
+	final JButton upBtn = new JButton("^");
+	final JButton forwardsBtn = new JButton(">");
+	final JButton homeBtn = new JButton("Home");
+	final JButton refreshBtn = new JButton("@");
+	final JTextField pathEntry = new JTextField(72);
+	final JButton navigateBtn = new JButton("=>");
+	final JCheckBox showHiddenChk = new JCheckBox("Show hidden files");
 	
-	JLabel statusLbl = new JLabel("");
+	final JLabel statusLbl = new JLabel("");
 	
-	History history = new History();
+	final History history = new History();
 	
-	Clipboard clipboard;
+	final Clipboard clipboard;
 	
-	Container contentPane = getContentPane();
+	final Container contentPane = getContentPane();
 	
 	int itemsCount = 0;
+
+	public JPanel getFilesPnl() {
+		return filesPnl;
+	}
+
+	public Set<Icon> getIcons() {
+		return icons;
+	}
+
+	public Set<Icon> getSelectedIcons() {
+		return selectedIcons;
+	}
+
+	public boolean isCtrlPressed() {
+		return false;
+	}
 	
 	/*
 	Event handlers
@@ -68,7 +68,7 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 	public void mousePressed(MouseEvent event) {}
 	public void mouseReleased(MouseEvent event) {}
 	public void mouseClicked(MouseEvent event) {
-		selectedIcons.forEach((x) -> x.unshade(x.label));
+		selectedIcons.forEach((x) -> x.unshade(x.getLabel()));
 	}
 	
 	public void itemStateChanged(ItemEvent event) {
@@ -127,7 +127,7 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 	}
 	
 	public void rename() {
-		selectedIcons.forEach((x) -> rename(x.file));
+		selectedIcons.forEach((x) -> rename(x.getFile()));
 		showFiles(history.getPath(0));
 	}
 	
@@ -139,7 +139,7 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 			if (newName == null) {
 				break;
 			} else {
-				if (newName.indexOf("/") == -1) {
+				if (!newName.contains("/")) {
 					valid = true;
 				}
 			}
@@ -158,7 +158,7 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 			if (filename == null) {
 				break;
 			} else {
-				if (filename.indexOf("/") == -1) {
+				if (!filename.contains("/")) {
 					valid = true;
 				}
 			}
@@ -167,7 +167,9 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 			if (valid) {
 				if (!filename.equals("")) {
 					File newFile = new File(history.getPath(0) + filename);
-					newFile.createNewFile();
+					if (!newFile.createNewFile()) {
+						throw new IOException("Failed to create file");
+					}
 					showFiles(history.getPath(0));
 				}
 			}
@@ -184,7 +186,7 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 			if (dirname == null) {
 				break;
 			} else {
-				if (dirname.indexOf("/") == -1) {
+				if (!dirname.contains("/")) {
 					valid = true;
 				}
 			}
@@ -193,7 +195,9 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 			if (valid) {
 				if (!dirname.equals("")) {
 					File newDir = new File(history.getPath(0) + dirname);
-					newDir.mkdir();
+					if (!newDir.mkdir()) {
+						throw new IOException("Failed to create directory");
+					}
 					showFiles(history.getPath(0));
 				}
 			}
@@ -206,11 +210,11 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 		if (file.isDirectory()) {
 			File[] files = file.listFiles();
 			if (files != null) { //some JVMs return null for empty dirs
-				for (int i = 0; i < files.length; i++) {
-					if (files[i].isDirectory()) {
-						delete(files[i]);
+				for (File value : files) {
+					if (value.isDirectory()) {
+						delete(value);
 					} else {
-						files[i].delete();
+						value.delete();
 					}
 				}
 			}
@@ -221,14 +225,14 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 	public void delete() {
 		int confirmationChoice = JOptionPane.showConfirmDialog(this, "Are you sure you want to permanently delete the selected directories/files?", "Permanently delete selection?", JOptionPane.YES_NO_OPTION);
 		if (confirmationChoice == 0) {
-			selectedIcons.forEach((x) -> delete(x.file));
+			selectedIcons.forEach((x) -> delete(x.getFile()));
 			showFiles(history.getPath(0));
 		}
 	}
 	
 	public void rubbish() {
 		try {
-			selectedIcons.forEach((x) -> Desktop.getDesktop().moveToTrash(x.file));
+			selectedIcons.forEach((x) -> Desktop.getDesktop().moveToTrash(x.getFile()));
 			showFiles(history.getPath(0));
 		} catch (UnsupportedOperationException e) {
 			JOptionPane.showMessageDialog(this, "Cannot move files to rubbish bin - operation not supported on this platform.", "Cannot move to bin", JOptionPane.ERROR_MESSAGE);
@@ -248,7 +252,7 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 					assocCommand = command;
 				}
 			}
-			if (assocCommand != null && !assocCommand.equals("")) {
+			if (!assocCommand.equals("")) {
 				String[] fileOpenCommand = {assocCommand, path + filename};
 				Runtime rt = Runtime.getRuntime();
 				Process pr = rt.exec(fileOpenCommand);
@@ -285,27 +289,29 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 			System.out.println("Error killing thumbnail loader thread: " + e.getMessage());
 		}
 		icons.clear();
-		ImageIcon fileLblIcon = null;
 		try {
 			File dir = new File(path);
 			if (dir.exists()) {
 				String[] files = dir.list();
+				if (files == null) {
+					throw new IOException("Failed to list files");
+				}
 				Arrays.sort(files);
-				for (int i = 0; i < files.length; i++) {
-					if ((!files[i].startsWith(".") && !files[i].endsWith("~")) || showHiddenChk.isSelected()) {
-						Icon icon = new Icon(this, files[i]);
+				for (String file : files) {
+					if ((!file.startsWith(".") && !file.endsWith("~")) || showHiddenChk.isSelected()) {
+						Icon icon = new Icon(this, file);
 						icons.add(icon);
 						icon.create();
 						itemsCount++;
 					}
 				}
-				for (int j = 0; j < (((int) filesPnl.getBounds().width / 96) * ((int) filesPnl.getBounds().height / 120) - paddingPnls.size() - files.length); j++) {
+				for (int j = 0; j < ((filesPnl.getBounds().width / 96) * (filesPnl.getBounds().height / 120) - paddingPnls.size() - files.length); j++) {
 					JPanel paddingPnl = new JPanel();
 					paddingPnl.setOpaque(false);
 					paddingPnls.add(paddingPnl);
 				}
-				for (int k = 0; k < paddingPnls.size(); k++) {
-					filesPnl.add(paddingPnls.get(k));
+				for (JPanel paddingPnl : paddingPnls) {
+					filesPnl.add(paddingPnl);
 				}
 				thumbnailLoader = new ThumbnailLoader(icons);
 				thumbnailLoader.start();
@@ -321,15 +327,15 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 	public void showFiles(String path) {
 		itemsCount = 0;
 		filesPnl.removeAll();
-		paddingPnls.forEach((x) -> filesPnl.remove(x));
+		paddingPnls.forEach(filesPnl::remove);
 			
-		filesPnl.setLayout(new GridLayout(0, (int) this.getBounds().width / 108));
+		filesPnl.setLayout(new GridLayout(0, this.getBounds().width / 108));
 
 		populateFiles(path);
 		
-		backBtn.setEnabled(history.populated() && history.pos > 0);
+		backBtn.setEnabled(history.populated() && history.position() > 0);
 		upBtn.setEnabled(history.pathLength(0) > 0);
-		forwardsBtn.setEnabled((history.populated() && history.pos < history.length()-1));
+		forwardsBtn.setEnabled((history.populated() && history.position() < history.length()-1));
 		pathEntry.setText(path);
 		
 		filesPnl.repaint();
@@ -374,13 +380,16 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 		setExtendedState(this.getExtendedState() | JFrame.MAXIMIZED_BOTH);
 		
 		initMenuBar();
-		
+
+		JScrollPane filesPane = new JScrollPane(filesPnl);
 		filesPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		filesPane.getVerticalScrollBar().setUnitIncrement(24);
 		
 		contentPane.add("North", menuPnl);
+		JPanel treePnl = new JPanel();
 		contentPane.add("West", treePnl);
 		contentPane.add("Center", filesPane);
+		JPanel statusPnl = new JPanel();
 		contentPane.add("South", statusPnl);
 		
 		statusPnl.add(statusLbl);
@@ -398,6 +407,6 @@ public class FileExplorer extends JFrame implements ActionListener, ItemListener
 	}
 	
 	public static void main(String[] args) {
-		FileExplorer fexp = new FileExplorer();
+		new FileExplorer();
 	}	
 }

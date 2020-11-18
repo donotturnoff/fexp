@@ -3,23 +3,36 @@ package net.donotturnoff.fexp;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.*;
-import javax.swing.BorderFactory; 
 import javax.swing.border.*;
 
 public class Icon implements MouseListener {
-	String path;
-	String filename;
-	JLabel label;
-	JPanel panel;
-	String mimeType;
-	String assocCommand;
-	File file;
-	String tooltip;
-	History history;
-	FileExplorer fexp;
+	private JLabel label;
+	private final String path, filename, assocCommand;
+	private String mimeType;
+	private final File file;
+	private final FileExplorer fexp;
+
+	public String getPath() {
+		return path;
+	}
+
+	public File getFile() {
+		return file;
+	}
+
+	public String getFilename() {
+		return filename;
+	}
+
+	public JLabel getLabel() {
+		return label;
+	}
+
+	public String getMimeType() {
+		return mimeType;
+	}
 	
 	public void mouseEntered(MouseEvent event) {
 		/*Border blackLine = BorderFactory.createLineBorder(Color.black);
@@ -35,8 +48,8 @@ public class Icon implements MouseListener {
 		
 		boolean isSelected = false;
 		
-		for (int i = 0; i < fexp.selectedIcons.size(); i++) {
-			if (fexp.selectedIcons.get(i).label == ((JLabel) event.getSource())) {
+		for (Icon icon: fexp.getSelectedIcons()) {
+			if (icon.label == event.getSource()) {
 				isSelected = true;
 				break;
 			} 
@@ -50,14 +63,13 @@ public class Icon implements MouseListener {
 	public void mouseReleased(MouseEvent event) {}
 	 
 	public void mouseClicked(MouseEvent event) {
-		JLabel fileLabel = (JLabel) event.getSource();
 		if (event.getClickCount() == 1) {
-			if (!fexp.ctrlPressed) {
-				fexp.selectedIcons.clear();
+			if (!fexp.isCtrlPressed()) {
+				fexp.getSelectedIcons().clear();
 			}
-			fexp.selectedIcons.add(this);
-			fexp.icons.forEach((x) -> unshade(x.label));
-			fexp.selectedIcons.forEach((x) -> shade(x.label));
+			fexp.getSelectedIcons().add(this);
+			fexp.getIcons().forEach((x) -> unshade(x.label));
+			fexp.getSelectedIcons().forEach((x) -> shade(x.label));
 		} else if (event.getClickCount() >= 2 && !event.isConsumed()) {
 			event.consume();
 			if (file.isDirectory()) {
@@ -83,7 +95,7 @@ public class Icon implements MouseListener {
 	}
 	
 	public void create() {
-		panel = new JPanel();
+		JPanel panel = new JPanel();
 		label = new JLabel(createFormattedLabel(), createImage(), JLabel.CENTER);
 		
 		label.setHorizontalTextPosition(JLabel.CENTER);
@@ -96,23 +108,23 @@ public class Icon implements MouseListener {
 		panel.setOpaque(false);
 						
 		panel.add(label);
-		fexp.filesPnl.add(panel);
+		fexp.getFilesPnl().add(panel);
 	}
 	
 	public ImageIcon createImage() {
 		ImageIcon fileImage = new ImageIcon();
-		if (file.isDirectory()) {fileImage = fexp.dirIcon;}
-		else if (file.isFile()) {fileImage = fexp.fileIcon;}	
+		if (file.isDirectory()) {fileImage = fexp.DIR_ICON;}
+		else if (file.isFile()) {fileImage = fexp.FILE_ICON;}
 		return fileImage;	
 	}
 	
 	public String createFormattedLabel() {
-		String formattedLabel = "";
+		StringBuilder formattedLabel = new StringBuilder();
 		for (int i = 0; i < Math.min(filename.length(), 30); i++) {
-			formattedLabel += Character.toString(filename.charAt(i)) + "<wbr />";
+			formattedLabel.append(filename.charAt(i)).append("<wbr />");
 		}
-		formattedLabel = "<html>" + formattedLabel + ((filename.length() > 30) ? "\u2026" : "") + "</html>";
-		return formattedLabel;
+		formattedLabel = new StringBuilder("<html>" + formattedLabel + ((filename.length() > 30) ? "\u2026" : "") + "</html>");
+		return formattedLabel.toString();
 	}
 	
 	public String getAssocCommand() {
@@ -143,9 +155,8 @@ public class Icon implements MouseListener {
 			}
 		} catch (IOException e) {
 			System.out.println("Missing MIME type associations file");
-		} finally {
-			return assocCommand;
 		}
+		return assocCommand;
 	}
 	
 	public Icon(FileExplorer explorer, String name) {

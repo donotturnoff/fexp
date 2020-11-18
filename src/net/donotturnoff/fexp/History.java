@@ -1,29 +1,15 @@
 package net.donotturnoff.fexp;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.io.*;
-import javax.swing.BorderFactory; 
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
-import java.lang.Runtime;
-import java.lang.Process;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import java.awt.Image;
-import javax.imageio.*;
-import java.awt.image.*;
-import javax.imageio.stream.ImageOutputStream;
-
-import java.awt.geom.AffineTransform;
+import java.util.List;
 
 public class History {
-	ArrayList<String> history = new ArrayList<String>();
-	int pos = -1;
+	private final List<String> history = new ArrayList<>();
+	private int pos = -1;
+
+	public int position() {
+		return pos;
+	}
 	
 	public void addPath(String path) {
 		if (path.charAt(path.length() - 1) != '/') {
@@ -66,12 +52,12 @@ public class History {
 	
 	public void up() {
 		String[] pathParts = getPath(0).split("/");
-		String newPath = "";
+		StringBuilder newPath = new StringBuilder();
 		for (int i = 0; i < pathParts.length - 1; i++) {
-			newPath += pathParts[i] + "/";
+			newPath.append(pathParts[i]).append("/");
 		}
 		clearTail();
-		addPath(newPath);
+		addPath(newPath.toString());
 	}
 	
 	public int length() {

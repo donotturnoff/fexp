@@ -2,29 +2,18 @@ package net.donotturnoff.fexp;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.io.*;
-import javax.swing.BorderFactory; 
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
-import java.lang.Runtime;
-import java.lang.Process;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
-import java.awt.Image;
 import javax.imageio.*;
 import java.awt.image.*;
 import javax.imageio.stream.ImageOutputStream;
 
 import java.awt.geom.AffineTransform;
+import java.util.Set;
 
 public class ThumbnailLoader extends Thread {
-	ArrayList<Icon> icons = new ArrayList<Icon>();
-	ImageIcon fileLblIcon = null;
-	
+	private final Set<Icon> icons;
+
 	private BufferedImage scale(BufferedImage source, int w, int h) {
 		BufferedImage bi = getCompatibleImage(w, h);
 		Graphics2D g2d = bi.createGraphics();
@@ -40,19 +29,18 @@ public class ThumbnailLoader extends Thread {
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		GraphicsDevice gd = ge.getDefaultScreenDevice();
 		GraphicsConfiguration gc = gd.getDefaultConfiguration();
-		BufferedImage image = gc.createCompatibleImage(w, h);
-		return image;
+		return gc.createCompatibleImage(w, h);
 	}
 	
 	private void compressImage(Icon icon, int w, int h) throws IOException {
-		File input = icon.file;
+		File input = icon.getFile();
 		
-		File outDirs = new File("thumbnails" + icon.path);
+		File outDirs = new File("thumbnails" + icon.getPath());
 		if (!outDirs.exists()) {
 			outDirs.mkdirs();
 		}
 
-		File output = new File("thumbnails" + icon.path + icon.filename);
+		File output = new File("thumbnails" + icon.getPath() + icon.getFilename());
 		
 		boolean thumbnailNeedsUpdating = false;
 		
@@ -64,10 +52,10 @@ public class ThumbnailLoader extends Thread {
 		if (thumbnailNeedsUpdating) {
 			OutputStream out = new FileOutputStream(output);
 		
-			if (!icon.mimeType.equals("image/gif")) {
+			if (!icon.getMimeType().equals("image/gif")) {
 				BufferedImage image = scale(ImageIO.read(input), w, h);
 
-				ImageWriter writer =  ImageIO.getImageWritersByFormatName(icon.mimeType.split("/")[1]).next();
+				ImageWriter writer =  ImageIO.getImageWritersByFormatName(icon.getMimeType().split("/")[1]).next();
 				ImageOutputStream ios = ImageIO.createImageOutputStream(out);
 				writer.setOutput(ios);
 
@@ -98,26 +86,24 @@ public class ThumbnailLoader extends Thread {
 	}
 	
 	public void scaleImage(Icon icon) {
-		if (icon.mimeType != null && icon.mimeType.split("/")[0].equals("image")) {
-			int imgWidth = 0, imgHeight = 0, newWidth = 64, newHeight = 64;
+		if (icon.getMimeType() != null && icon.getMimeType().split("/")[0].equals("image")) {
+			int imgWidth, imgHeight, newWidth = 64, newHeight = 64;
 			float scaleFactor = 1f;
 			try {
-				BufferedImage bImg = ImageIO.read(icon.file);
+				BufferedImage bImg = ImageIO.read(icon.getFile());
 				imgWidth = bImg.getWidth();
 				imgHeight = bImg.getHeight();
 				
 				if (imgWidth > newWidth && imgHeight > newHeight) {scaleFactor = Math.max(imgWidth/newWidth, imgHeight/newHeight);}
-				
-				newWidth = imgWidth;
-				newHeight = imgHeight;
+
 				newWidth = (int) (imgWidth/scaleFactor);
 				newHeight = (int) (imgHeight/scaleFactor);
 				compressImage(icon, newWidth, newHeight);
 				
-				icon.label.setIcon(new ImageIcon("thumbnails" + icon.path + icon.filename));
+				icon.getLabel().setIcon(new ImageIcon("thumbnails" + icon.getPath() + icon.getFilename()));
 			}
 			catch (Exception e) {
-				System.out.println("Error reading file " + icon.path + icon.filename + ": " + e.getMessage());
+				System.out.println("Error reading file " + icon.getPath() + icon.getFilename() + ": " + e.getMessage());
 			}
 		}
 	}
@@ -127,12 +113,12 @@ public class ThumbnailLoader extends Thread {
 	}
 	
 	public void run() {
-		for (int i = 0; i < icons.size(); i++) {
-			scaleImage(icons.get(i));
+		for (Icon icon : icons) {
+			scaleImage(icon);
 		}
 	}
 	
-	public ThumbnailLoader(ArrayList<Icon> iconList) {
-		icons = iconList;
+	public ThumbnailLoader(Set<Icon> icons) {
+		this.icons = icons;
 	}
 }

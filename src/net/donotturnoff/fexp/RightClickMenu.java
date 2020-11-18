@@ -1,46 +1,29 @@
 package net.donotturnoff.fexp;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.io.*;
-import javax.swing.BorderFactory; 
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
-import java.lang.Runtime;
-import java.lang.Process;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import java.awt.Image;
-import javax.imageio.*;
-import java.awt.image.*;
-import javax.imageio.stream.ImageOutputStream;
-
-import java.awt.geom.AffineTransform;
 
 public class RightClickMenu extends JPopupMenu implements ActionListener {
-	JMenuItem copyOption, cutOption, pasteOption, renameOption, newFileOption, newDirOption, deleteOption, rubbishBinOption;
-	FileExplorer fexp;
+	private final JMenuItem copyOption, cutOption, pasteOption, renameOption, newFileOption, newDirOption, deleteOption, rubbishBinOption;
+	private final FileExplorer fexp;
 	
 	public void actionPerformed(ActionEvent event) {
-		if (event.getSource() == copyOption) {
+		Object source = event.getSource();
+		if (source == copyOption) {
 			fexp.copy();
-		} else if (event.getSource() == cutOption) {
+		} else if (source == cutOption) {
 			fexp.cut();
-		} else if (event.getSource() == pasteOption) {
+		} else if (source == pasteOption) {
 			fexp.paste();
-		} else if (event.getSource() == renameOption) {
+		} else if (source == renameOption) {
 			fexp.rename();
-		} else if (event.getSource() == newFileOption) {
+		} else if (source == newFileOption) {
 			fexp.newFile();
-		} else if (event.getSource() == newDirOption) {
+		} else if (source == newDirOption) {
 			fexp.newDir();
-		} else if (event.getSource() == deleteOption) {
+		} else if (source == deleteOption) {
 			fexp.delete();
-		} else if (event.getSource() == rubbishBinOption) {
+		} else if (source == rubbishBinOption) {
 			fexp.rubbish();
 		}
 	}

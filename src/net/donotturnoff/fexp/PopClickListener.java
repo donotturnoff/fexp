@@ -1,70 +1,59 @@
 package net.donotturnoff.fexp;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.io.*;
-import javax.swing.BorderFactory; 
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
-import java.lang.Runtime;
-import java.lang.Process;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import java.awt.Image;
-import javax.imageio.*;
-import java.awt.image.*;
-import javax.imageio.stream.ImageOutputStream;
-
-import java.awt.geom.AffineTransform;
 
 public class PopClickListener extends MouseAdapter {
-	FileExplorer fexp;
-	String filesPanelOptions = "v nm";
-	String iconOptions = "cx r nm td";
+	private final FileExplorer fexp;
+	private final String filesPanelOptions = "v nm";
+	private final String iconOptions = "cx r nm td";
 
     public void mousePressed(MouseEvent e) {
     	boolean isSelected = false;
     	Icon icon = null;
     	if (e.getSource().getClass() == JPanel.class) {
-			if ((JPanel) e.getSource() == fexp.filesPnl) {
-				if (e.isPopupTrigger()) {doPop(e, filesPanelOptions);}   		
-			}
-		}
-    	else {
-			for (int i = 0; i < fexp.selectedIcons.size(); i++) {
-				if ((JLabel) e.getSource() == fexp.selectedIcons.get(i).label) {
-					isSelected = true;
-					icon = fexp.selectedIcons.get(i);
-					break;
+				if (e.getSource() == fexp.getFilesPnl()) {
+					if (e.isPopupTrigger()) {
+						doPop(e, filesPanelOptions);
+					}
+				}
+			} else {
+				for (Icon i: fexp.getSelectedIcons()) {
+					if (e.getSource() == i.getLabel()) {
+						isSelected = true;
+						icon = i;
+						break;
+					}
+				}
+				for (Icon i: fexp.getIcons()) {
+					if (e.getSource() == i.getLabel()) {
+						icon = i;
+						break;
+					}
+				}
+				if (!isSelected) {
+					fexp.getSelectedIcons().clear();
+					fexp.getSelectedIcons().add(icon);
+				}
+				if (e.isPopupTrigger()) {
+					doPop(e, iconOptions);
 				}
 			}
-			for (int j = 0; j < fexp.icons.size(); j++) {
-				if ((JLabel) e.getSource() == fexp.icons.get(j).label) {
-					icon = fexp.icons.get(j);
-					break;
-				}
-			}
-			if (!isSelected) {
-				fexp.selectedIcons.clear();
-				fexp.selectedIcons.add(icon);
-			}
-			if (e.isPopupTrigger()) {doPop(e, iconOptions);}
-		}
     }
 
     public void mouseReleased(MouseEvent e) {
     	if (e.getSource().getClass() == JPanel.class) {
-			if ((JPanel) e.getSource() == fexp.filesPnl) {
-				if (e.isPopupTrigger()) {doPop(e, filesPanelOptions);}   		
-			}
+				if (e.getSource() == fexp.getFilesPnl()) {
+					if (e.isPopupTrigger()) {
+						doPop(e, filesPanelOptions);
+					}
+				}
     	}
     	else {
-        	if (e.isPopupTrigger()) {doPop(e, iconOptions);}
-        }
+    		if (e.isPopupTrigger()) {
+    			doPop(e, iconOptions);
+    		}
+    	}
     }
 
     private void doPop(MouseEvent e, String options){

@@ -1,54 +1,54 @@
 package net.donotturnoff.fexp;
 
-import java.util.ArrayList;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Clipboard {
-	FileExplorer fexp;
-	ArrayList<Icon> clipboard;
-	String mode;
-	String source;
+	private final FileExplorer fexp;
+	private final Set<Icon> clipboard;
+	private String mode, source;
 	
 	public Clipboard(FileExplorer explorer) {
 		fexp = explorer;
-		clipboard = new ArrayList<Icon>();
+		clipboard = new HashSet<>();
 	}
 	
-	public void add(ArrayList<Icon> icons) {
-		icons.forEach((x) -> clipboard.add(x));
+	public void add(Set<Icon> icons) {
+		clipboard.addAll(icons);
 	}
 	
 	public void findChildren(Icon icon) {
-		String[] files = icon.file.list();
-		for (int i = 0; i < files.length; i++) {
-			Icon childIcon = new Icon(fexp, files[i], icon.path + icon.filename + "/");
-			if (childIcon.file.isDirectory()) {
+		String[] files = icon.getFile().list();
+		for (String file : files) {
+			Icon childIcon = new Icon(fexp, file, icon.getPath() + icon.getFilename() + "/");
+			if (childIcon.getFile().isDirectory()) {
 				findChildren(childIcon);
 			}
 			clipboard.add(childIcon);
 		}
 	}
 	
-	public void copy(ArrayList<Icon> icons, String sourcePath) {
+	public void copy(Set<Icon> icons, String sourcePath) {
 		mode = "copy";
 		source = sourcePath;
 		add(icons);
-		for (int i = 0; i < icons.size(); i++) {
-			if (icons.get(i).file.isDirectory()) {
-				findChildren(icons.get(i));
+		for (Icon icon : icons) {
+			if (icon.getFile().isDirectory()) {
+				findChildren(icon);
 			}
 		}
 	}
 	
-	public void cut(ArrayList<Icon> icons, String sourcePath) {
+	public void cut(Set<Icon> icons, String sourcePath) {
 		mode = "cut";
 		source = sourcePath;
 		add(icons);
-		for (int i = 0; i < icons.size(); i++) {
-			if (icons.get(i).file.isDirectory()) {
-				findChildren(icons.get(i));
+		for (Icon icon : icons) {
+			if (icon.getFile().isDirectory()) {
+				findChildren(icon);
 			}
 		}
 	}
@@ -56,29 +56,29 @@ public class Clipboard {
 	public void paste(String destination) {
 		try {
 			if (mode.equals("copy")) {
-				for (int i = 0; i < clipboard.size(); i++) {
-					File file = new File(clipboard.get(i).path + clipboard.get(i).filename);
+				for (Icon icon : clipboard) {
+					File file = new File(icon.getPath() + icon.getFilename());
 					if (file.isDirectory()) {
-						File path = new File(destination + clipboard.get(i).path.replace(source, "") + clipboard.get(i).filename);
+						File path = new File(destination + icon.getPath().replace(source, "") + icon.getFilename());
 						path.mkdirs();
 					} else {
-						File path = new File(destination + clipboard.get(i).path.replace(source, ""));
+						File path = new File(destination + icon.getPath().replace(source, ""));
 						path.mkdirs();
-						Files.copy(Paths.get(clipboard.get(i).path + clipboard.get(i).filename), Paths.get(destination + clipboard.get(i).path.replace(source, "") + clipboard.get(i).filename));
+						Files.copy(Paths.get(icon.getPath() + icon.getFilename()), Paths.get(destination + icon.getPath().replace(source, "") + icon.getFilename()));
 					}
 				}
 			} else if (mode.equals("cut")) {
-				for (int i = 0; i < clipboard.size(); i++) {
-					File file = new File(clipboard.get(i).path + clipboard.get(i).filename);
+				for (Icon icon : clipboard) {
+					File file = new File(icon.getPath() + icon.getFilename());
 					if (file.isDirectory()) {
-						File path = new File(destination + clipboard.get(i).path.replace(source, "") + clipboard.get(i).filename);
+						File path = new File(destination + icon.getPath().replace(source, "") + icon.getFilename());
 						path.mkdirs();
 					} else {
-						File path = new File(destination + clipboard.get(i).path.replace(source, ""));
+						File path = new File(destination + icon.getPath().replace(source, ""));
 						path.mkdirs();
-						Files.move(Paths.get(clipboard.get(i).path + clipboard.get(i).filename), Paths.get(destination + clipboard.get(i).path.replace(source, "") + clipboard.get(i).filename));
+						Files.move(Paths.get(icon.getPath() + icon.getFilename()), Paths.get(destination + icon.getPath().replace(source, "") + icon.getFilename()));
 					}
-					fexp.delete(clipboard.get(i).file);	
+					fexp.delete(icon.getFile());
 				}	
 			}
 		} catch (Exception e) {
