@@ -1,0 +1,8 @@
+text=geany
+image=sxiv
+audio=mpv
+video=mpv
+application/pdf=mupdf
+text/html=firefox
+text/x-python=geany
+application/javascript=geany
